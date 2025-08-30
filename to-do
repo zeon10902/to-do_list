@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# to-do list
+
+PROGNAME="$(basename "$0")" 
+
+usage () {
+	echo "$PROGNAME: usage: $PROGNAME (no arguments needed)"
+	return
+}
+
+
+
+# process command line options
+
+
+while [[ -n "$1" ]]; do
+	case "$1" in
+		-h | --help)		usage
+							exit
+							;;
+		*)					usage >&2
+							exit 1
+							;;	
+	esac
+	shift
+done	
+
+
+
+
+
+while true; do
+	clear
+	cat <<- _EOF_
+		Please Select:
+
+		1. Create new to-do list
+		2. Create new event
+		3. View to-do list
+		0. Quit
+
+	_EOF_
+	read -p "Enter selection [0-3] > "
+	echo " "
+
+	if [[ "$REPLY" =~ ^[0-3]$ ]]; then
+		# Create new to-do list
+		if [[ "$REPLY" == 1 ]]; then
+			if [[ ! -f "to-do-compilation" ]]; then
+				touch "to-do-compilation"
+			fi
+			read -p "Name of the new to-do list > " list
+			if [[ (-n "$list") && ($(grep -c "^${list}" to-do-compilation) -lt 1) ]]; then  
+				echo "$list:" >> to-do-compilation
+				echo "Create successfully"
+			else
+				echo "The name provided is invalid or the to-do list already exists."
+			fi
+			
+			sleep 3
+
+			continue
+		fi
+		if [[ "$REPLY" == 2 ]]; then
+			if [[ ! -f "to-do-compilation" ]]; then
+				echo "Please create a to-do list first"
+				sleep 3
+				continue
+			fi
+			while IFS= read -r line; do
+				echo "$line"
+			done < to-do-compilation	
+			echo " "
+			read -p "Enter the name of to-do list you want to add event > " list
+			if [[ $(grep -c "^${list}:" to-do-compilation) -lt 1 ]]; then
+				echo "The to-do list does not exist"
+			else
+				read -p "Enter the name of event > " event
+				if [[ -n "$event" ]]; then
+					read -p "Enter the date of event > " date
+					if [[ -n "$date" ]]; then
+						sed -i "s/^${list}:/${list}: ${date} ${event}/" to-do-compilation && echo "Create successfully"
+					fi
+				fi
+			fi
+			   	
+
+			sleep 3
+
+			continue
+		fi
+		if [[ "$REPLY" == 3 ]]; then
+			# View to-do list
+			if [[ ! -f "to-do-compilation" ]]; then
+				echo "You have no to-do list"
+			else 
+				while IFS= read -r line; do
+					echo "$line"
+				done < to-do-compilation	
+			fi
+			
+			sleep 3
+			
+			continue
+		fi
+		if [[ "$REPLY" == 0 ]]; then
+			# Quit
+			exit	
+		fi
+	fi
+
+done
+
